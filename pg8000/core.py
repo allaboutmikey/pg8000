@@ -164,7 +164,9 @@ class CoreConnection:
         tcp_keepalive=True,
         application_name=None,
         replication=None,
+        row_factory=None,
     ):
+        self._row_factory = row_factory
         self._client_encoding = "utf8"
         self._commands_with_count = (
             b"INSERT",
@@ -795,7 +797,10 @@ class CoreConnection:
                 v = func(str(data[idx : idx + vlen], encoding=self._client_encoding))
                 idx += vlen
             row.append(v)
-        context.rows.append(row)
+        if self._row_factory is None:
+            context.rows.append(row)
+        else:
+            context.rows.append(self._row_factory(context.columns,row))
 
     def handle_messages(self, context):
         code = None
